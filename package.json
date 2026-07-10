@@ -1,0 +1,38 @@
+{
+  "name": "pgcanvas",
+  "version": "1.0.0",
+  "description": "Web app to visually explore PostgreSQL databases which auto generates ER diagrams and lets you view and edit data with role-based access. No SQL knowledge required.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon backend/server.js",
+    "start": "node backend/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ridhimagarg-rg/pgcanvas.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ridhimagarg-rg/pgcanvas/issues"
+  },
+  "homepage": "https://github.com/ridhimagarg-rg/pgcanvas#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.22.0"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true,
+    "@prisma/engines@7.8.0": true,
+    "prisma@7.8.0": true
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
