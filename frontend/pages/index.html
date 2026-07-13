@@ -3,9 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>pgcanvas</title>
+    <title>pgCanvas</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/pgcanvas-logo-icon.svg">
+    <link rel="stylesheet" href="../styles/auth.css">
 </head>
 <body>
-    <h1>pgcanvas is live</h1>
+    <div id="container">
+
+        <div id="left-panel">
+            <div id="logo">
+                <img src="../assets/pgcanvas-logo-icon.svg" alt="pgCanvas Logo">
+            </div>
+            <h1><span id="pg">pg</span><span id="canvas">Canvas</span></h1>
+            <p class="subtitle">Visual Database Explorer</p>
+            <p>Manage your tables, data and relationships through an interactive visual canvas</p>
+            <a href="#">Know More</a>
+        </div>
+
+        <div id="right-panel">
+            <div id="tabs">
+                <button class="tab active" id="login-tab">Login</button>
+                <button class="tab" id="register-tab">Register</button>
+            </div>
+            
+            <div id="login-form">
+                <div class="input-group">
+                    <input type="email" id="login-email" placeholder="Enter your email">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="login-password" placeholder="Enter your password">
+                </div>
+                <a href="#">Forgot password?</a>
+                <button id="login-button">Login</button>
+            </div>
+
+            
+            <div id="register-form">
+                <div class="input-group">
+                    <input type="text" id="register-name" placeholder="Enter your name">
+                </div>
+                <div class="input-group">
+                    <input type="email" id="register-email" placeholder="Enter your email">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="register-password" placeholder="Enter your password">
+                </div>
+                <div class="input-group">
+                    <select id="register-role">
+                        <option value="">Select your role</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Faculty">Faculty</option>
+                        <option value="Staff">Staff</option>
+                    </select>
+                </div>
+                <button id="register-button">Register</button>
+            </div>
+            
+        </div>
+
+    </div>
 </body>
 </html>

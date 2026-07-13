@@ -9,7 +9,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
-    res.status(200).json({ message: 'pgcanvas server is running'});
+    res.status(200).json({ message: 'pgCanvas server is running'});
 })
 
 const PORT = process.env.PORT || 5000;
