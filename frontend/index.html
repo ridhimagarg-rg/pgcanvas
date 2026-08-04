@@ -5,66 +5,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>pgCanvas</title>
     <link rel="icon" type="image/svg+xml" href="./assets/pgcanvas-logo-icon.svg">
-    <link rel="stylesheet" href="./styles/auth.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab.active {
+            color: #0694a2;
+            font-weight: 600;
+            border-bottom: 3px solid #0694a2;
+        }
+        .error-message { font-size: 0.85rem; color: #b91c1c; min-height: 20px; margin-top: 8px; }
+    </style>
 </head>
-<body>
-    <div id="container">
+<body class="h-screen">
 
-        <div id="left-panel">
-            <div id="logo">
-                <img src="./assets/pgcanvas-logo-icon.svg" alt="pgCanvas Logo">
-            </div>
-            <h1><span id="pg">pg</span><span id="canvas">Canvas</span></h1>
-            <p class="subtitle">Visual Database Explorer</p>
-            <p>Manage your tables, data and relationships through an interactive visual canvas</p>
-            <a href="#">Know More</a>
+<div id="container" class="flex h-screen min-h-screen">
+
+    <div id="left-panel" class="w-[45%] bg-white px-[70px] flex flex-col justify-center pt-[7vh]">
+        <div id="logo">
+            <img src="./assets/pgcanvas-logo-icon.svg" alt="pgCanvas Logo" class="w-[90px] h-[90px] mb-10">
+        </div>
+        <h1 class="text-[4.5rem] font-bold mb-4 leading-[1.2]">
+            <span id="pg" class="text-black">pg</span><span id="canvas" class="text-[#0694a2]">Canvas</span>
+        </h1>
+        <p class="subtitle text-[1.5rem] font-medium mb-20 text-[#555]">Visual Database Explorer</p>
+        <p class="text-[1.1rem] font-light text-black mb-2 leading-relaxed">
+            Manage your tables, data and relationships through an interactive visual canvas
+        </p>
+        <a href="#" class="text-[0.9rem] text-[#0694a2] font-medium no-underline hover:text-[#057a85] hover:underline">Know More</a>
+    </div>
+
+    <div id="right-panel" class="w-[55%] bg-[#e9f9f9] px-[130px] flex flex-col justify-center">
+
+        <div id="tabs" class="flex mb-8 border-b-2 border-[#e0e0e0] max-w-[480px]">
+            <button class="tab active bg-none border-none border-b-[3px] border-transparent -mb-0.5 px-6 py-3 text-base font-[Inter] cursor-pointer text-[#999]" id="login-tab">Login</button>
+            <button class="tab bg-none border-none border-b-[3px] border-transparent -mb-0.5 px-6 py-3 text-base font-[Inter] cursor-pointer text-[#999]" id="register-tab">Register</button>
         </div>
 
-        <div id="right-panel">
-            <div id="tabs">
-                <button class="tab active" id="login-tab">Login</button>
-                <button class="tab" id="register-tab">Register</button>
+        <!-- Login Form -->
+        <div id="login-form" class="max-w-[480px]">
+            <div class="mb-4">
+                <input type="email" id="login-email" placeholder="Enter your email"
+                    class="w-full px-4 py-3.5 border border-[#e0e0e0] rounded-lg text-base font-[Inter] bg-white outline-none transition-all focus:border-[#0694a2] focus:ring-2 focus:ring-[#0894b2]/10">
             </div>
-            
-            <div id="login-form">
-                <div class="input-group">
-                    <input type="email" id="login-email" placeholder="Enter your email">
-                </div>
-                <div class="input-group">
-                    <input type="password" id="login-password" placeholder="Enter your password">
-                </div>
-                <a href="#">Forgot password?</a>
-                <div id="login-error" class="error-message"></div>
-                <button id="login-button">Login</button>
+            <div class="mb-4">
+                <input type="password" id="login-password" placeholder="Enter your password"
+                    class="w-full px-4 py-3.5 border border-[#e0e0e0] rounded-lg text-base font-[Inter] bg-white outline-none transition-all focus:border-[#0694a2] focus:ring-2 focus:ring-[#0894b2]/10">
             </div>
+            <a href="#" class="text-[0.9rem] text-[#4f4f4f] no-underline hover:text-black hover:underline">Forgot password?</a>
+            <div id="login-error" class="error-message"></div>
+            <button id="login-button"
+                class="w-full h-[2.8rem] mt-7 bg-[#0694a2] text-white border-none rounded-lg text-[1.4rem] font-[Inter] cursor-pointer transition-colors hover:bg-[#07818f] disabled:bg-[#a0c4c8] disabled:cursor-not-allowed">
+                Login
+            </button>
+        </div>
 
-            
-            <div id="register-form">
-                <div class="input-group">
-                    <input type="text" id="register-name" placeholder="Enter your name">
-                </div>
-                <div class="input-group">
-                    <input type="email" id="register-email" placeholder="Enter your email">
-                </div>
-                <div class="input-group">
-                    <input type="password" id="register-password" placeholder="Enter your password">
-                </div>
-                <div class="input-group">
-                    <select id="register-role">
-                        <option value="">Select your role</option>
-                        <option value="Admin">Admin</option>
-                        <option value="Faculty">Faculty</option>
-                        <option value="Staff">Staff</option>
-                    </select>
-                </div>
-                <button id="register-button">Register</button>
-                <div id="register-error" class="error-message"></div>
+        <!-- Register Form -->
+        <div id="register-form" class="max-w-[480px]" style="display:none">
+            <div class="mb-4">
+                <input type="text" id="register-name" placeholder="Enter your name"
+                    class="w-full px-4 py-3.5 border border-[#e0e0e0] rounded-lg text-base font-[Inter] bg-white outline-none transition-all focus:border-[#0694a2] focus:ring-2 focus:ring-[#0894b2]/10">
             </div>
-            
+            <div class="mb-4">
+                <input type="email" id="register-email" placeholder="Enter your email"
+                    class="w-full px-4 py-3.5 border border-[#e0e0e0] rounded-lg text-base font-[Inter] bg-white outline-none transition-all focus:border-[#0694a2] focus:ring-2 focus:ring-[#0894b2]/10">
+            </div>
+            <div class="mb-4">
+                <input type="password" id="register-password" placeholder="Enter your password"
+                    class="w-full px-4 py-3.5 border border-[#e0e0e0] rounded-lg text-base font-[Inter] bg-white outline-none transition-all focus:border-[#0694a2] focus:ring-2 focus:ring-[#0894b2]/10">
+            </div>
+            <div class="mb-4">
+                <select id="register-role"
+                    class="w-full px-4 py-3.5 border border-[#e0e0e0] rounded-lg text-base font-[Inter] bg-white outline-none transition-all focus:border-[#0694a2] focus:ring-2 focus:ring-[#0894b2]/10">
+                    <option value="">Select your role</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Faculty">Faculty</option>
+                    <option value="Staff">Staff</option>
+                </select>
+            </div>
+            <button id="register-button"
+                class="w-full h-[2.8rem] mt-7 bg-[#0694a2] text-white border-none rounded-lg text-[1.4rem] font-[Inter] cursor-pointer transition-colors hover:bg-[#07818f] disabled:bg-[#a0c4c8] disabled:cursor-not-allowed">
+                Register
+            </button>
+            <div id="register-error" class="error-message"></div>
         </div>
 
     </div>
-    <script src="./scripts/config.js"></script>
-    <script src="./scripts/auth.js"></script>
+</div>
+
+<script src="./scripts/config.js"></script>
+<script src="./scripts/auth.js"></script>
 </body>
 </html>
