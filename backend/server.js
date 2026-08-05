@@ -8,6 +8,7 @@ app.use(express.json());
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/connections', require('./routes/connections.routes'));
 app.use('/api/users', require('./routes/users.routes'));
+app.use('/api/canvas', require('./routes/canvas.routes'));
 
 app.get('/', (req, res) => {
     res.status(200).json({ message: 'pgCanvas server is running'})
