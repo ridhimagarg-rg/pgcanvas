@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas | pgCanvas</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/pgcanvas-logo-icon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+
+        #canvas-area         { cursor: grab; user-select: none; }
+        #canvas-area.panning { cursor: grabbing; }
+        #canvas-area {
+            background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .table-node          { transition: box-shadow 0.15s, border-color 0.15s, opacity 0.15s; }
+        .table-node.selected    { border-color: #0694a2 !important; box-shadow: 0 4px 20px rgba(6,148,162,0.25) !important; }
+        .table-node.highlighted { border-color: #0694a2 !important; opacity: 1 !important; }
+        .table-node.dimmed      { opacity: 0.3; }
+
+        .table-name-item:hover,
+        .table-name-item.active { background: #f0f9fa; color: #0694a2; }
+        .table-name-item.active .item-dot { background: #0694a2; opacity: 1; }
+
+        .side-tab { border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s, border-color 0.15s; }
+        .side-tab.active { color: #0694a2; border-bottom-color: #0694a2; font-weight: 600; }
+
+        .relation-line { stroke: #0694a2; stroke-width: 1.5; fill: none; opacity: 0.6; }
+        .relation-arrow { fill: #0694a2; opacity: 0.6; }
+
+        #minimap {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            width: 180px;
+            height: 120px;
+            background: white;
+            border: 1px solid #e8ecf0;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+            z-index: 20;
+            cursor: pointer;
+        }
+        #minimap-canvas { width: 100%; height: 100%; }
+        #minimap-viewport {
+            position: absolute;
+            border: 1.5px solid #0694a2;
+            background: rgba(6,148,162,0.08);
+            border-radius: 2px;
+            pointer-events: none;
+            top: 0; left: 0;
+        }
+
+        .inline-input {
+            width: 100%; padding: 3px 6px;
+            border: 1px solid #0694a2; border-radius: 4px;
+            font-size: 0.78rem; font-family: 'Inter', sans-serif;
+            outline: none; background: white; min-width: 60px;
+        }
+        .inline-input:read-only { background: #f1f5f9; color: #999; border-color: #e8ecf0; cursor: not-allowed; }
+
+        #data-modal-table thead th { position: sticky; top: 0; z-index: 1; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="h-screen overflow-hidden">
+
+<div id="app" class="flex h-screen overflow-hidden">
+
+    <aside class="w-60 min-w-[240px] bg-white border-r border-[#e8ecf0] flex flex-col py-6 shrink-0">
+
+        <div class="flex items-center gap-2.5 px-5 pb-6 border-b border-[#e8ecf0] text-[1.1rem] text-[#1a1a1a]">
+            <img src="../assets/pgcanvas-logo-icon.svg" alt="pgCanvas" class="w-7 h-7">
+            <span>pg<strong>Canvas</strong></span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-4">
+
+            <div class="px-3 py-2.5 bg-[#f0f9fa] rounded-lg border border-[#c9edf1]">
+                <div class="text-[0.7rem] text-[#aaa] uppercase tracking-wide">Connected to</div>
+                <div id="connection-name-display" class="font-semibold text-[0.9rem] text-[#0694a2] mt-1">Loading...</div>
+            </div>
+
+            <input type="text" id="table-search" placeholder="Search tables..."
+                class="w-full px-3 py-2 border border-[#e8ecf0] rounded-lg text-[0.82rem] outline-none transition-colors focus:border-[#0694a2]">
+
+            <div>
+                <div class="text-[0.7rem] text-[#aaa] uppercase tracking-wide mb-1">Tables</div>
+                <div id="table-names" class="flex flex-col gap-0.5"></div>
+            </div>
+
+            <div class="border-t border-[#e8ecf0] pt-3 mt-auto">
+                <div class="text-[0.7rem] text-[#aaa] uppercase tracking-wide mb-2">Legend</div>
+                <div class="flex items-center gap-2 text-[0.78rem] text-[#666] mb-1.5">
+                    <span class="bg-[#fef9c3] text-[#854d0e] text-[0.62rem] px-1 py-0.5 rounded font-bold">PK</span>
+                    Primary Key
+                </div>
+                <div class="flex items-center gap-2 text-[0.78rem] text-[#666] mb-1.5">
+                    <span class="bg-[#dbeafe] text-[#1d4ed8] text-[0.62rem] px-1 py-0.5 rounded font-bold">FK</span>
+                    Foreign Key
+                </div>
+                <div class="flex items-center gap-2 text-[0.78rem] text-[#666]">
+                    <span class="text-[#0694a2] font-bold tracking-tighter">———</span>
+                    Relationship
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2.5 px-5 pt-4 border-t border-[#e8ecf0]">
+            <div id="user-avatar" class="w-[34px] h-[34px] rounded-full bg-[#0694a2] text-white flex items-center justify-center font-semibold text-[0.85rem] shrink-0"></div>
+            <div class="flex-1 min-w-0">
+                <span id="user-name"  class="block text-[0.85rem] font-semibold text-[#1a1a1a] truncate">Loading...</span>
+                <span id="user-role"  class="block text-[0.75rem] text-[#999]"></span>
+            </div>
+            <button id="logout-btn" title="Logout" class="bg-transparent border-none cursor-pointer text-[#999] p-1 rounded flex items-center hover:text-red-600 transition-colors">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16,17 21,12 16,7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+            </button>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col bg-[#f1f5f9] overflow-hidden relative min-w-0">
+
+        <div class="bg-white border-b border-[#e8ecf0] px-4 h-12 flex items-center gap-3 z-10 shrink-0">
+            <a href="dashboard.html"
+               class="no-underline text-[#666] text-[0.85rem] px-2.5 py-1.5 border border-[#e8ecf0] rounded-md hover:text-[#0694a2] hover:border-[#0694a2] transition-all whitespace-nowrap">
+                ← Back
+            </a>
+            <span id="toolbar-conn-name" class="text-[0.85rem] font-semibold text-[#444]"></span>
+            <div class="flex items-center gap-1.5 ml-auto">
+                <button id="zoom-out-btn"   class="bg-white border border-[#e8ecf0] rounded-md px-2.5 py-1 text-[0.85rem] cursor-pointer text-[#444] hover:bg-[#f0f9fa] hover:border-[#0694a2] hover:text-[#0694a2] transition-all">−</button>
+                <span   id="zoom-level"     class="text-[0.8rem] text-[#666] min-w-[42px] text-center">100%</span>
+                <button id="zoom-in-btn"    class="bg-white border border-[#e8ecf0] rounded-md px-2.5 py-1 text-[0.85rem] cursor-pointer text-[#444] hover:bg-[#f0f9fa] hover:border-[#0694a2] hover:text-[#0694a2] transition-all">+</button>
+                <button id="fit-screen-btn" class="bg-white border border-[#e8ecf0] rounded-md px-2.5 py-1 text-[0.85rem] cursor-pointer text-[#444] hover:bg-[#f0f9fa] hover:border-[#0694a2] hover:text-[#0694a2] transition-all">⊞ Fit</button>
+            </div>
+        </div>
+
+        <div id="canvas-area" class="flex-1 overflow-hidden relative">
+            <div id="canvas-inner" class="absolute" style="transform-origin: 0 0; will-change: transform;">
+                <svg id="relations-svg" class="absolute top-0 left-0 pointer-events-none overflow-visible" style="width:10000px;height:10000px;">
+                    <defs>
+                        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                            <path d="M0,0 L0,6 L8,3 z" class="relation-arrow"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <div id="tables-container" class="relative"></div>
+            </div>
+
+            <div id="minimap">
+                <canvas id="minimap-canvas"></canvas>
+                <div id="minimap-viewport"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="side-panel" class="hidden w-[340px] min-w-[340px] bg-white border-l border-[#e8ecf0] flex flex-col overflow-hidden shrink-0">
+
+        <div class="px-5 py-4 border-b border-[#e8ecf0] flex items-start justify-between shrink-0">
+            <div>
+                <h3 id="sp-title"    class="text-[1.05rem] font-bold text-[#1a1a1a]">—</h3>
+                <div class="flex gap-3 mt-0.5">
+                    <span id="sp-records"  class="text-[0.75rem] text-[#999]"></span>
+                    <span id="sp-columns"  class="text-[0.75rem] text-[#999]"></span>
+                </div>
+            </div>
+            <button id="sp-close" class="text-[#999] hover:text-[#333] hover:bg-[#f1f5f9] rounded-md w-7 h-7 flex items-center justify-center transition-all border-none bg-transparent cursor-pointer shrink-0">✕</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
+
+            <div>
+                <div class="text-[0.7rem] text-[#aaa] uppercase tracking-wide mb-2">Schema</div>
+                <div id="sp-schema-list" class="flex flex-col gap-0"></div>
+            </div>
+
+            <div id="sp-relationships">
+                <div class="text-[0.7rem] text-[#aaa] uppercase tracking-wide mb-2">Relationships</div>
+                <div id="sp-rel-content"></div>
+            </div>
+
+            <button id="sp-view-data-btn"
+                class="w-full bg-[#1a1a1a] text-white border-none py-2.5 rounded-lg text-[0.88rem] font-semibold cursor-pointer hover:bg-[#333] transition-colors mt-auto">
+                View data
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="data-modal-overlay" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-[100] backdrop-blur-[2px]">
+    <div class="bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.18)] w-[90vw] max-w-[980px] max-h-[88vh] flex flex-col overflow-hidden">
+
+        <div class="px-6 py-4 border-b border-[#e8ecf0] flex items-center justify-between shrink-0">
+            <div class="flex items-baseline gap-3">
+                <h2 id="modal-title" class="text-[1.1rem] font-bold text-[#1a1a1a]">—</h2>
+                <span id="modal-meta" class="text-[0.78rem] text-[#999]"></span>
+            </div>
+            <button id="modal-close" class="text-[#999] hover:text-[#333] hover:bg-[#f1f5f9] rounded-md w-8 h-8 flex items-center justify-center transition-all border-none bg-transparent cursor-pointer text-lg">✕</button>
+        </div>
+
+        <div class="px-6 py-3 border-b border-[#f1f5f9] flex gap-2 items-center shrink-0">
+            <div class="relative flex-1 max-w-[400px]">
+                <input type="text" id="modal-search" placeholder="Search rows..."
+                    class="w-full pl-9 pr-3 py-2 border border-[#e8ecf0] rounded-lg text-[0.82rem] outline-none focus:border-[#0694a2]">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-[#aaa]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </div>
+            <select id="modal-filter-col"
+                class="px-3 py-2 border border-[#e8ecf0] rounded-lg text-[0.82rem] outline-none focus:border-[#0694a2] bg-white">
+                <option value="">All columns</option>
+            </select>
+            <button id="modal-add-row-btn"
+                class="bg-[#0694a2] text-white border-none px-4 py-2 rounded-lg text-[0.82rem] font-medium cursor-pointer hover:bg-[#07818f] transition-colors whitespace-nowrap ml-auto">
+                + Add row
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-auto min-h-0">
+            <table id="data-modal-table" class="w-full border-collapse text-[0.8rem]">
+                <thead id="modal-thead"></thead>
+                <tbody id="modal-tbody"></tbody>
+            </table>
+            <div id="modal-empty" class="hidden px-6 py-8 text-[#999] text-[0.88rem] text-center">No records found.</div>
+            <div id="modal-loading" class="px-6 py-8 text-[#999] text-[0.88rem] text-center">Loading...</div>
+        </div>
+
+        <div class="px-6 py-3 border-t border-[#e8ecf0] flex items-center justify-between text-[0.8rem] text-[#666] shrink-0">
+            <span id="modal-showing">—</span>
+            <div class="flex items-center gap-2">
+                <button id="modal-prev" class="border border-[#e8ecf0] rounded-lg w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-[#f8fafc] transition-colors bg-transparent">‹</button>
+                <span id="modal-page-info" class="min-w-[60px] text-center">1/1</span>
+                <button id="modal-next" class="border border-[#e8ecf0] rounded-lg w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-[#f8fafc] transition-colors bg-transparent">›</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="delete-row-overlay" class="hidden fixed inset-0 bg-black/35 flex items-center justify-center z-[200] backdrop-blur-[2px]">
+    <div class="bg-white rounded-[14px] p-7 max-w-[380px] w-full shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
+        <h2 class="text-[1.05rem] font-bold mb-2.5">Delete Row</h2>
+        <p class="text-[#666] text-[0.88rem] mb-5 leading-relaxed">Are you sure you want to delete this row? This cannot be undone.</p>
+        <div class="flex gap-2 justify-end">
+            <button id="delete-row-cancel"  class="bg-transparent text-[#666] border border-[#e8ecf0] px-[18px] py-[10px] rounded-lg text-[0.9rem] cursor-pointer hover:bg-[#f8fafc] hover:text-[#1a1a1a] transition-all">Cancel</button>
+            <button id="delete-row-confirm" class="bg-red-600 text-white border-none px-[18px] py-[10px] rounded-lg text-[0.9rem] cursor-pointer hover:bg-red-700">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script src="../scripts/config.js"></script>
+<script src="../scripts/utils/auth-guard.js"></script>
+<script src="../scripts/api/connections.js"></script>
+<script src="../scripts/pages/canvas.js"></script>
+</body>
+</html>
